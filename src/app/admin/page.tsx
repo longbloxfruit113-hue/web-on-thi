@@ -34,6 +34,8 @@ export default function AdminPage() {
   const [materials, setMaterials] = useState<any[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [selectedQuizId, setSelectedQuizId] = useState("");
+  const [quizToDeleteId, setQuizToDeleteId] = useState("");
+  const [materialToDeleteId, setMaterialToDeleteId] = useState("");
 
   // Status message
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -103,6 +105,9 @@ export default function AdminPage() {
         if (quizData.data.length > 0) {
           setSelectedQuizId(quizData.data[0].id);
           setManualQuizId(quizData.data[0].id);
+          setQuizToDeleteId((prev) => (quizData.data.some((q: any) => q.id === prev) ? prev : quizData.data[0].id));
+        } else {
+          setQuizToDeleteId("");
         }
       }
 
@@ -110,6 +115,11 @@ export default function AdminPage() {
       const matData = await matRes.json();
       if (matData.success) {
         setMaterials(matData.data);
+        if (matData.data.length > 0) {
+          setMaterialToDeleteId((prev) => (matData.data.some((m: any) => m.id === prev) ? prev : matData.data[0].id));
+        } else {
+          setMaterialToDeleteId("");
+        }
       }
     } catch (e) {
       console.error(e);
@@ -789,6 +799,47 @@ Giải thích: Công suất P = A / t = 12000 / 30 = 400 W.`;
             </p>
           </div>
 
+          {/* KHU VỰC CHỌN VÀ XÓA BÀI HỌC LÝ THUYẾT */}
+          <div className="p-5 rounded-2xl border border-rose-200 bg-rose-50/70 space-y-3">
+            <div className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-rose-600 shrink-0" />
+              <h4 className="font-bold text-slate-900 text-sm">
+                Xóa Tài Liệu Lý Thuyết Đã Có:
+              </h4>
+            </div>
+            <p className="text-xs text-slate-600">
+              Chọn bài học lý thuyết bạn muốn gỡ bỏ khỏi website và bấm nút xóa:
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <select
+                value={materialToDeleteId}
+                onChange={(e) => setMaterialToDeleteId(e.target.value)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-rose-300 bg-white text-sm font-medium text-slate-800 focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">-- Bấm vào đây để chọn bài lý thuyết muốn xóa --</option>
+                {materials.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    [{m.subject_name || "Môn"}] {m.title}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                disabled={!materialToDeleteId}
+                onClick={() => {
+                  const target = materials.find((m) => m.id === materialToDeleteId);
+                  if (target) handleDeleteMaterial(target.id, target.title);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 text-white font-semibold text-xs hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-xs shrink-0 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                Xóa bài lý thuyết đã chọn
+              </button>
+            </div>
+          </div>
+
           <form onSubmit={handleCreateMaterial} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -946,6 +997,47 @@ Giải thích: Công suất P = A / t = 12000 / 30 = 400 W.`;
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
               Tạo khung đề thi cho môn học trước khi nạp ngân hàng câu hỏi.
             </p>
+          </div>
+
+          {/* KHU VỰC CHỌN VÀ XÓA ĐỀ KIỂM TRA */}
+          <div className="p-5 rounded-2xl border border-rose-200 bg-rose-50/70 space-y-3">
+            <div className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-rose-600 shrink-0" />
+              <h4 className="font-bold text-slate-900 text-sm">
+                Xóa Bài Kiểm Tra Đã Có:
+              </h4>
+            </div>
+            <p className="text-xs text-slate-600">
+              Chọn bài kiểm tra bên dưới và bấm nút xóa để dọn dẹp (tất cả câu hỏi trong bài đó sẽ tự động được xóa theo):
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <select
+                value={quizToDeleteId}
+                onChange={(e) => setQuizToDeleteId(e.target.value)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-rose-300 bg-white text-sm font-medium text-slate-800 focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">-- Bấm vào đây để chọn bài kiểm tra muốn xóa --</option>
+                {quizzes.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    [{q.subject_name || "Môn"}] {q.title} ({q.question_count || 0} câu)
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                disabled={!quizToDeleteId}
+                onClick={() => {
+                  const target = quizzes.find((q) => q.id === quizToDeleteId);
+                  if (target) handleDeleteQuiz(target.id, target.title);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 text-white font-semibold text-xs hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-xs shrink-0 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                Xóa bài kiểm tra đã chọn
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handleCreateQuiz} className="space-y-4 max-w-2xl">
