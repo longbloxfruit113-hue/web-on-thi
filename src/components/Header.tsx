@@ -17,7 +17,7 @@ export function Header() {
 
   const navLinks = [
     { href: "/", label: "Trang chủ", icon: Sparkles },
-    { href: "/mon-hoc/toan-hoc", label: "Môn học & Ôn tập", icon: BookOpen },
+    { href: "/#danh-sach-mon-hoc", label: "Môn học & Ôn tập", icon: BookOpen },
     { href: "/admin", label: "Quản trị Admin", icon: LayoutDashboard },
   ];
 
