@@ -25,3 +25,7 @@ yarn-error.log*
 Thumbs.db
 
 archive_media/
+quiz.db-wal
+quiz.db-shm
+*.tsbuildinfo
+

@@ -88,42 +88,78 @@ export function parseRawQuizText(rawText: string): ParsedQuestion[] {
       continue;
     }
 
-    // Detect standard options: "A.", "A)", "[A]", "A - "
-    const optionMatch = line.match(/^([A-D])[\.\)\:\-]\s*(.+)$/i);
+    // Detect standard options: "A.", "A)", "[A]", "A - ", "*A.", "A. ... (Đúng)", "A. ... *"
+    let isOptMarkedCorrect = false;
+    let optLine = line;
+    if (optLine.startsWith("*")) {
+      isOptMarkedCorrect = true;
+      optLine = optLine.substring(1).trim();
+    }
+    if (/\s*\*$/.test(optLine)) {
+      isOptMarkedCorrect = true;
+      optLine = optLine.replace(/\s*\*$/, "").trim();
+    }
+    if (/\[x\]/i.test(optLine) || /\(đúng\)/i.test(optLine) || /\[đúng\]/i.test(optLine)) {
+      isOptMarkedCorrect = true;
+      optLine = optLine.replace(/\[x\]|\(đúng\)|\[đúng\]/gi, "").trim();
+    }
+
+    const optionMatch = optLine.match(/^(?:\[([A-D])\]|([A-D])[\.\)\:\-]\s*|([A-D])\s{2,})(.+)$/i);
     if (optionMatch && currentQuestion) {
       inExplanation = false;
-      const key = optionMatch[1].toUpperCase();
-      const content = optionMatch[2].trim();
+      const key = (optionMatch[1] || optionMatch[2] || optionMatch[3]).toUpperCase();
+      const content = optionMatch[4].trim();
       currentOptions.push({
         key,
         content,
-        isCorrect: false,
+        isCorrect: isOptMarkedCorrect,
       });
       continue;
     }
 
-    // Detect correct answer indicator: "Đáp án: A", "Đáp án đúng: B", "Chọn C" hoặc "Đáp án: 40 W" (cho trả lời ngắn)
-    const ansMatch = line.match(/^(?:Đáp án|Đáp án đúng|Key|Ans|Chọn)[\:\s\-]+(.+)$/i);
+    // Detect correct answer indicator:
+    // "Đáp án đúng là: A", "Đáp án đúng: A", "Đáp án: A", "Đáp án chính xác: A", "Chọn: A", "Chọn A", "Key: A", "Ans: A", "Câu trả lời đúng: A"
+    const ansMatch = line.match(/^(?:Đáp án đúng là|Đáp án đúng|Đáp án chính xác|Đáp án|Câu trả lời đúng|Key|Ans|Chọn)[\:\s\-\.\=]+(.+)$/i);
     if (ansMatch && currentQuestion) {
-      const ansVal = ansMatch[1].trim();
-      // If single letter A-D
-      if (/^[A-D]$/i.test(ansVal)) {
-        const correctKey = ansVal.toUpperCase();
+      const rawAnsVal = ansMatch[1].trim();
+
+      // Check if it starts with letter A-D (e.g. "A", "A.", "(A)", "[A]", "A - Nội dung", "A: Nội dung")
+      const letterMatch = rawAnsVal.match(/^\(?\[?([A-D])(?:\.|\)|\:|\-|\s|\]|$)/i);
+      if (letterMatch && currentOptions.length > 0) {
+        const correctKey = letterMatch[1].toUpperCase();
         currentOptions.forEach((opt) => {
           if (opt.key === correctKey) {
             opt.isCorrect = true;
           }
         });
-      } else {
-        // Likely a short answer string
-        if (currentOptions.length === 0) {
-          currentType = "short_answer";
-          currentOptions.push({
-            key: "ans",
-            content: ansVal,
-            isCorrect: true,
+      } else if (currentOptions.length > 0) {
+        // Maybe multiple letters: "A, C"
+        const letters = rawAnsVal.match(/\b([A-D])\b/gi);
+        if (letters && letters.length > 0) {
+          const letterSet = new Set(letters.map((l) => l.toUpperCase()));
+          currentOptions.forEach((opt) => {
+            if (letterSet.has(opt.key)) {
+              opt.isCorrect = true;
+            }
           });
+        } else {
+          // Check if user wrote the exact option content instead of letter
+          const normalizedAns = rawAnsVal.toLowerCase().replace(/[\.\,\;\:\s]/g, "");
+          const matchedOpt = currentOptions.find((opt) => 
+            opt.content.toLowerCase().replace(/[\.\,\;\:\s]/g, "") === normalizedAns
+          );
+          if (matchedOpt) {
+            matchedOpt.isCorrect = true;
+          }
         }
+      } else {
+        // Likely a short answer string (no options parsed yet)
+        currentType = "short_answer";
+        currentOptions.push({
+          key: "ans",
+          content: rawAnsVal,
+          isCorrect: true,
+        });
       }
       continue;
     }

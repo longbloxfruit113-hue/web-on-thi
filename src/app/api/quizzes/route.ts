@@ -45,3 +45,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: "Thiếu id bài kiểm tra cần xóa" }, { status: 400 });
+    }
+
+    // Explicitly delete cascade in order to guarantee clean removal
+    db.prepare(`
+      DELETE FROM options WHERE question_id IN (SELECT id FROM questions WHERE quiz_id = ?)
+    `).run(id);
+    db.prepare("DELETE FROM questions WHERE quiz_id = ?").run(id);
+    db.prepare("DELETE FROM quizzes WHERE id = ?").run(id);
+
+    return NextResponse.json({ success: true, message: "Đã xóa bài kiểm tra và toàn bộ câu hỏi liên quan thành công!" });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
