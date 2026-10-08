@@ -120,13 +120,13 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "admin" && password === "admin123") {
+    if (username === "nguyenhailongdz2012" && password === "@Longg435.") {
       setIsAuthenticated(true);
       sessionStorage.setItem("admin_logged", "true");
       setLoginError("");
       loadInitialData();
     } else {
-      setLoginError("Tên đăng nhập hoặc mật khẩu không chính xác (Mặc định: admin / admin123)");
+      setLoginError("Tên đăng nhập hoặc mật khẩu không chính xác");
     }
   };
 
@@ -415,7 +415,7 @@ Giải thích: Công suất P = A / t = 12000 / 30 = 400 W.`;
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin"
+                placeholder="Nhập tên tài khoản admin"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
@@ -429,13 +429,10 @@ Giải thích: Công suất P = A / t = 12000 / 30 = 400 W.`;
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="admin123"
+                placeholder="Nhập mật khẩu admin"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
-              <span className="text-[11px] text-slate-400 mt-1 block">
-                Mặc định: <strong>admin</strong> / <strong>admin123</strong>
-              </span>
             </div>
 
             <button
