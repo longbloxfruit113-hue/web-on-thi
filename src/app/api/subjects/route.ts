@@ -4,7 +4,7 @@ import crypto from "crypto";
 
 export async function GET() {
   try {
-    const subjects = getSubjects();
+    const subjects = await getSubjects();
     return NextResponse.json({ success: true, data: subjects });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -21,12 +21,12 @@ export async function POST(request: Request) {
     }
 
     const id = "sub-" + crypto.randomUUID().slice(0, 8);
-    const existing = db.prepare("SELECT id FROM subjects WHERE slug = ?").get(slug);
+    const existing = await db.prepare("SELECT id FROM subjects WHERE slug = ?").get(slug);
     if (existing) {
       return NextResponse.json({ success: false, error: "Slug môn học này đã tồn tại" }, { status: 400 });
     }
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO subjects (id, name, slug, description, icon, color)
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(id, name, slug, description || "", icon || "BookOpen", color || "blue");

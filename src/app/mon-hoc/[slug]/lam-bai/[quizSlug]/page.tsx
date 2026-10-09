@@ -14,10 +14,10 @@ export default async function TakeQuizPage({
 }) {
   const { slug, quizSlug } = await params;
 
-  const subject = getSubjectBySlug(slug);
+  const subject = await getSubjectBySlug(slug);
   if (!subject) notFound();
 
-  const quiz = getQuizBySlug(subject.id, quizSlug);
+  const quiz = await getQuizBySlug(subject.id, quizSlug);
   if (!quiz) notFound();
 
   return (

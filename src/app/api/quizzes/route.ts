@@ -8,11 +8,11 @@ export async function GET(request: Request) {
     const subjectId = searchParams.get("subjectId");
 
     if (subjectId) {
-      const quizzes = getQuizzesBySubjectId(subjectId);
+      const quizzes = await getQuizzesBySubjectId(subjectId);
       return NextResponse.json({ success: true, data: quizzes });
     }
 
-    const allQuizzes = db.prepare(`
+    const allQuizzes = await db.prepare(`
       SELECT q.*, s.name as subject_name, (SELECT COUNT(*) FROM questions qu WHERE qu.quiz_id = q.id) as question_count
       FROM quizzes q
       JOIN subjects s ON q.subject_id = s.id
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     const id = "quiz-" + crypto.randomUUID().slice(0, 8);
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO quizzes (id, subject_id, title, slug, description, time_limit)
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(id, subjectId, title, slug, description || "", Number(timeLimit) || 15);
@@ -56,11 +56,11 @@ export async function DELETE(request: Request) {
     }
 
     // Explicitly delete cascade in order to guarantee clean removal
-    db.prepare(`
+    await db.prepare(`
       DELETE FROM options WHERE question_id IN (SELECT id FROM questions WHERE quiz_id = ?)
     `).run(id);
-    db.prepare("DELETE FROM questions WHERE quiz_id = ?").run(id);
-    db.prepare("DELETE FROM quizzes WHERE id = ?").run(id);
+    await db.prepare("DELETE FROM questions WHERE quiz_id = ?").run(id);
+    await db.prepare("DELETE FROM quizzes WHERE id = ?").run(id);
 
     return NextResponse.json({ success: true, message: "Đã xóa bài kiểm tra và toàn bộ câu hỏi liên quan thành công!" });
   } catch (error: any) {

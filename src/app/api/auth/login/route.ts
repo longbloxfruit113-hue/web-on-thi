@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
 
-    const user = db.prepare("SELECT * FROM admin_users WHERE username = ? AND password = ?").get(username, password) as any;
+    const user = (await db.prepare("SELECT * FROM admin_users WHERE username = ? AND password = ?").get(username, password)) as any;
 
     if (!user) {
       return NextResponse.json({ success: false, error: "Sai tên đăng nhập hoặc mật khẩu" }, { status: 401 });

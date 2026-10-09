@@ -32,13 +32,13 @@ export default async function SubjectDetailPage({
   const { slug } = await params;
   const { tab } = await searchParams;
 
-  const subject = getSubjectBySlug(slug);
+  const subject = await getSubjectBySlug(slug);
   if (!subject) {
     notFound();
   }
 
-  const materials = getMaterialsBySubjectId(subject.id);
-  const quizzes = getQuizzesBySubjectId(subject.id);
+  const materials = await getMaterialsBySubjectId(subject.id);
+  const quizzes = await getQuizzesBySubjectId(subject.id);
   const activeTab = tab ? tab : (materials.length > 0 ? "kien-thuc" : "kiem-tra");
 
   return (

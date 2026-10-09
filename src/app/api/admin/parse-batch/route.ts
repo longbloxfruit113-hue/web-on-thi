@@ -23,29 +23,24 @@ export async function POST(request: Request) {
 
     // If requested to save directly into the quiz
     if (saveDirectly && quizId) {
-      const insertQuestion = db.prepare(`
-        INSERT INTO questions (id, quiz_id, content, explanation, order_index, type)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `);
+      const statements: { sql: string; args: any[] }[] = [];
+      for (const q of parsedQuestions) {
+        const questionId = "q-" + crypto.randomUUID().slice(0, 8);
+        statements.push({
+          sql: `INSERT INTO questions (id, quiz_id, content, explanation, order_index, type) VALUES (?, ?, ?, ?, ?, ?)`,
+          args: [questionId, quizId, q.content, q.explanation || "", q.orderIndex, q.type || "multiple_choice"],
+        });
 
-      const insertOption = db.prepare(`
-        INSERT INTO options (id, question_id, content, is_correct)
-        VALUES (?, ?, ?, ?)
-      `);
-
-      const transaction = db.transaction(() => {
-        for (const q of parsedQuestions) {
-          const questionId = "q-" + crypto.randomUUID().slice(0, 8);
-          insertQuestion.run(questionId, quizId, q.content, q.explanation || "", q.orderIndex, q.type || "multiple_choice");
-
-          for (const opt of q.options) {
-            const optId = "opt-" + crypto.randomUUID().slice(0, 8);
-            insertOption.run(optId, questionId, opt.content, opt.isCorrect ? 1 : 0);
-          }
+        for (const opt of q.options) {
+          const optId = "opt-" + crypto.randomUUID().slice(0, 8);
+          statements.push({
+            sql: `INSERT INTO options (id, question_id, content, is_correct) VALUES (?, ?, ?, ?)`,
+            args: [optId, questionId, opt.content, opt.isCorrect ? 1 : 0],
+          });
         }
-      });
+      }
 
-      transaction();
+      await db.batch(statements);
 
       return NextResponse.json({
         success: true,

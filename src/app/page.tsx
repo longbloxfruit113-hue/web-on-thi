@@ -56,8 +56,8 @@ const colorStyles: Record<string, { bg: string; text: string; border: string; ba
   },
 };
 
-export default function HomePage() {
-  const subjects = getSubjects() as any[];
+export default async function HomePage() {
+  const subjects = (await getSubjects()) as any[];
 
   return (
     <div className="space-y-16 pb-12">

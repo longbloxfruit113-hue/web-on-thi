@@ -26,13 +26,13 @@ export default async function StudyMaterialReaderPage({
 }) {
   const { slug, materialSlug } = await params;
 
-  const subject = getSubjectBySlug(slug);
+  const subject = await getSubjectBySlug(slug);
   if (!subject) notFound();
 
-  const material = getMaterialBySlug(subject.id, materialSlug);
+  const material = await getMaterialBySlug(subject.id, materialSlug);
   if (!material) notFound();
 
-  const otherMaterials = getMaterialsBySubjectId(subject.id);
+  const otherMaterials = await getMaterialsBySubjectId(subject.id);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

@@ -37,28 +37,24 @@ export async function POST(request: Request) {
 
     const questionId = "q-" + crypto.randomUUID().slice(0, 8);
 
-    const insertQuestion = db.prepare(`
-      INSERT INTO questions (id, quiz_id, content, explanation, order_index, type)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
+    const statements: { sql: string; args: any[] }[] = [
+      {
+        sql: `INSERT INTO questions (id, quiz_id, content, explanation, order_index, type) VALUES (?, ?, ?, ?, ?, ?)`,
+        args: [questionId, quizId, content, explanation || "", orderIndex || 0, type],
+      },
+    ];
 
-    const insertOption = db.prepare(`
-      INSERT INTO options (id, question_id, content, is_correct)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    const transaction = db.transaction(() => {
-      insertQuestion.run(questionId, quizId, content, explanation || "", orderIndex || 0, type);
-
-      if (Array.isArray(options)) {
-        for (const opt of options) {
-          const optId = "opt-" + crypto.randomUUID().slice(0, 8);
-          insertOption.run(optId, questionId, opt.content, opt.isCorrect ? 1 : 0);
-        }
+    if (Array.isArray(options)) {
+      for (const opt of options) {
+        const optId = "opt-" + crypto.randomUUID().slice(0, 8);
+        statements.push({
+          sql: `INSERT INTO options (id, question_id, content, is_correct) VALUES (?, ?, ?, ?)`,
+          args: [optId, questionId, opt.content, opt.isCorrect ? 1 : 0],
+        });
       }
-    });
+    }
 
-    transaction();
+    await db.batch(statements);
 
     return NextResponse.json({ success: true, data: { id: questionId } });
   } catch (error: any) {

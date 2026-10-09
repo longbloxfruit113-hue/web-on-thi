@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const quiz = getQuizById(id);
+    const quiz = await getQuizById(id);
 
     if (!quiz) {
       return NextResponse.json({ success: false, error: "Không tìm thấy đề thi" }, { status: 404 });
@@ -25,7 +25,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    db.prepare("DELETE FROM quizzes WHERE id = ?").run(id);
+    await db.prepare("DELETE FROM quizzes WHERE id = ?").run(id);
     return NextResponse.json({ success: true, message: "Đã xóa đề thi thành công" });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
